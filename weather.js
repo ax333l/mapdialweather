@@ -90,7 +90,7 @@ let text = (object) => {
 }
 
 async function marker(text, method){
-    if(method=='delete'){
+    if(method=='remove'){
         return new Promise(async (resolve, reject) => {
             request({url: server+'delete',method: 'POST', json: {...text}, headers: {api_key: api_key, 'Accept': 'application/json', 'Content-Type': 'application/json'}}, async function(err,res,body){
                 if(err){
