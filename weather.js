@@ -116,16 +116,18 @@ async function marker(text, method){
 }
 
 async function getYandexUrl(name){
+    console.log(name)
     return new Promise(async (resolve, reject) => {
         nightmare
             .goto('https://yandex.by/pogoda/minsk')
-            .type('#header2input', name)
-            .wait('#search-results > li:nth-child(1) > a')
-            .evaluate(() => document.querySelector('#search-results > li:nth-child(1) > a').href)
+            .click('body > header > div > form > div > input')
+            .type('body > header > div > form > div > input', name)
+            .wait('li[class="mini-suggest__item mini-suggest__item_type_nav"]')
+            .evaluate(() => document.querySelector('body').innerHTML)
             .end()
             .then(link => {
-                console.log(link)
-                resolve(link)
+                const $ = cheerio.load(link)
+                resolve($('li[class="mini-suggest__item mini-suggest__item_type_nav"] > a').attr('href'))
             })
             .catch(error => {
                 console.error(error)
@@ -157,7 +159,6 @@ function weatherConditionsNow(link, callback){
 }
 //'https://yandex.by/pogoda/minsk','https://yandex.by/pogoda/vitebsk','https://yandex.by/pogoda/grodno','https://yandex.by/pogoda/brest','https://yandex.by/pogoda/mogilev','https://yandex.by/pogoda/gomel','https://yandex.by/pogoda/26003','https://yandex.by/pogoda/26001'
 setInterval(() => {
-    console.log(cities)
     cities.forEach(async (city,i) => {
         if(!city.link){
             let uri = await getYandexUrl(city.city)
