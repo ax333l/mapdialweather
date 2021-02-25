@@ -7,7 +7,7 @@ const cheerio = require('cheerio')
 const fs = require('fs')
 let cities = require('./weather.json')
 const Nightmare = require('nightmare')
-const nightmare = Nightmare({ show: true })
+const nightmare = Nightmare({ show: false })
 const morgan = require('morgan')
 
 app.use(morgan(':method :url :status :res[content-length] - :response-time ms'))
