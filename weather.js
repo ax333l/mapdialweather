@@ -8,6 +8,7 @@ const fs = require('fs')
 let cities = require('./weather.json')
 const Nightmare = require('nightmare')
 const nightmare = Nightmare({ show: false })
+const uuid = require('uuid-random')
 
 
 app.use(bodyParser.json());
@@ -31,9 +32,10 @@ app.get('/', async function(req, res){
 
 app.post('/', async function(req, res){
     if(req.body.city){
-        cities.push({city: req.body.city})
+        const id = uuid()
+        cities.push({city: req.body.city, _id: id})
         fs.writeFileSync('./weather.json', JSON.stringify(cities))
-        res.status(200).send({status: true, message: 'pushed'})
+        return res.status(200).send({status: true, message: id})
     }
     else{
         res.status(400).send({status: false, message: 'no city provided'})
@@ -42,10 +44,11 @@ app.post('/', async function(req, res){
 
 app.delete('/', async function(req, res){
     if(req.body.id){
+        let index = cities.findIndex(city => city._id === req.body.id)
+        if(index == -1) return res.status(400).send({status: false})
         marker({
-            _id: req.body.id,
+            _id: cities[index].id,
         },'remove')
-        let index = cities.findIndex(city => city.id === req.body.id)
         if(index!=-1){
             cities.splice(index,1)
         }
@@ -53,7 +56,7 @@ app.delete('/', async function(req, res){
         res.status(200).send({status: true, message: 'deleted'})
     }
     else{
-        req.status(400).send({status: false, message: "No id provided"})
+        res.status(400).send({status: false, message: "No id provided"})
     }
 })
 
@@ -101,22 +104,29 @@ async function marker(text, method){
 
 async function getYandexUrl(name){
     return new Promise(async (resolve, reject) => {
-        nightmare
+       /* nightmare
             .goto('https://yandex.by/pogoda/minsk')
+            .evaluate(function() {
+                document.querySelector('#header2input').value = ''
+            })            
             .type('#header2input', name)
             .wait('#search-results > li:nth-child(1) > a')
             .evaluate(() => document.querySelector('#search-results > li:nth-child(1) > a').href)
-            .end()
             .then(link => {
                 console.log(link)
                 resolve(link)
             })
             .catch(error => {
                 console.error(error)
-            })
+            })*/
+        request({url: 'https://yandex.by/pogoda/search?request='+encodeURI(name)}, function(err, res, html) {
+            let $ = cheerio.load(html)
+            let url = $('body > div > div.content.content ancient-design yes > div.grid.clearfix > div > div.grid__cell.grid__cell_pos_1.grid__cell_size_4 > div > li > a').attr('href') || $('body > div > div.content.content_ancient-design_yes > div.grid.clearfix > div > div.grid__cell.grid__cell_pos_1.grid__cell_size_4 > div > li:nth-child(1) > a').attr('href')
+            console.log(url)
+            resolve('https://yandex.by'+url)
+        })
     })
 }
-
 function getLocationbyAdress(address, callback){
     request({url: 'https://geocode.search.hereapi.com/v1/geocode?q='+encodeURI(address)+'&apiKey='+apiKey}, function(err,res,html){
         if(err){
@@ -142,7 +152,10 @@ function weatherConditionsNow(link, callback){
 //'https://yandex.by/pogoda/minsk','https://yandex.by/pogoda/vitebsk','https://yandex.by/pogoda/grodno','https://yandex.by/pogoda/brest','https://yandex.by/pogoda/mogilev','https://yandex.by/pogoda/gomel','https://yandex.by/pogoda/26003','https://yandex.by/pogoda/26001'
 setInterval(() => {
     cities.forEach(async (city,i) => {
+        console.log(city)
+        console.log(city.link)
         if(!city.link){
+            console.log(1)
             let uri = await getYandexUrl(city.city)
             cities[i].link = uri
             city.link = uri
@@ -186,7 +199,5 @@ setInterval(() => {
     });
 }, 10*1000);
 
-const port = process.env.PORT || 3000;
+const port = process.env.PORT || 8080;
 http.listen(port, () => console.log(`Listening on port ${port}...`));
-//body > div.b-page__container > div.content.content_compressed.i-bem > div.content__top > div > div.content__row > div.fact.fact_theme_day-partly.card.card_size_big > div.fact__hourly.fact__hourly_nav-visible_next.i-bem.fact__hourly_js_inited > div > ul > li.fact__hour.swiper-slide.swiper-slide-active > span > div.fact__hour-label
-//body > div.b-page__container > div.content.content_compressed.i-bem > div.content__top > div > div.content__row > div.fact.fact_theme_day-cloudy.fact_prec_rain-low.card.card_size_big > div.fact__hourly.fact__hourly_nav-visible_next.i-bem.fact__hourly_js_inited > div > ul > li.fact__hour.swiper-slide.swiper-slide-active > span > div.fact__hour-label
