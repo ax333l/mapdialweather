@@ -8,14 +8,16 @@ const fs = require('fs')
 let cities = require('./weather.json')
 const Nightmare = require('nightmare')
 const nightmare = Nightmare({ show: false })
+const morgan = require('morgan')
 
-
+app.use(morgan(':method :url :status :res[content-length] - :response-time ms'))
 app.use(bodyParser.json());
 
 let api_key = '8723Z30-135M24K-K255VTS-91F90K1'
 const apiKey = '1WMMX7z7ESKEZYwBP7XrxuPCVznXVoN4Ol9_0YT67-4'
 
 app.post('/api_key', async function(req, res){
+    console.log(2)
     if(req.body.api_key){
         api_key = req.body.api_key
         res.status(200).send({status: true, message: "Api key changed"})
@@ -26,10 +28,12 @@ app.post('/api_key', async function(req, res){
 })
 
 app.get('/', async function(req, res){
+    console.log(1)
     res.status(200).send({cities: cities, api_key: api_key})
 })
 
 app.post('/', async function(req, res){
+    console.log(req.body)
     if(req.body.city){
         cities.push({city: req.body.city})
         fs.writeFileSync('./weather.json', JSON.stringify(cities))
@@ -87,7 +91,7 @@ let text = (object) => {
 }
 
 async function marker(text, method){
-    if(method=='remove){
+    if(method=='remove'){
           return new Promise(async (resolve, reject) => {
             request({url: server+'delete',method: 'POST', json: {...text}, headers: {api_key: api_key, 'Accept': 'application/json', 'Content-Type': 'application/json'}}, async function(err,res,body){
                 if(err){
@@ -153,6 +157,7 @@ function weatherConditionsNow(link, callback){
 }
 //'https://yandex.by/pogoda/minsk','https://yandex.by/pogoda/vitebsk','https://yandex.by/pogoda/grodno','https://yandex.by/pogoda/brest','https://yandex.by/pogoda/mogilev','https://yandex.by/pogoda/gomel','https://yandex.by/pogoda/26003','https://yandex.by/pogoda/26001'
 setInterval(() => {
+    console.log(cities)
     cities.forEach(async (city,i) => {
         if(!city.link){
             let uri = await getYandexUrl(city.city)
@@ -200,5 +205,3 @@ setInterval(() => {
 
 const port = process.env.PORT || 8080;
 http.listen(port, () => console.log(`Listening on port ${port}...`));
-//body > div.b-page__container > div.content.content_compressed.i-bem > div.content__top > div > div.content__row > div.fact.fact_theme_day-partly.card.card_size_big > div.fact__hourly.fact__hourly_nav-visible_next.i-bem.fact__hourly_js_inited > div > ul > li.fact__hour.swiper-slide.swiper-slide-active > span > div.fact__hour-label
-//body > div.b-page__container > div.content.content_compressed.i-bem > div.content__top > div > div.content__row > div.fact.fact_theme_day-cloudy.fact_prec_rain-low.card.card_size_big > div.fact__hourly.fact__hourly_nav-visible_next.i-bem.fact__hourly_js_inited > div > ul > li.fact__hour.swiper-slide.swiper-slide-active > span > div.fact__hour-label
