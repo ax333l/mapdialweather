@@ -7,7 +7,7 @@ const cheerio = require('cheerio')
 const fs = require('fs')
 let cities = require('./weather.json')
 const Nightmare = require('nightmare')
-const nightmare = Nightmare({ show: false })
+const nightmare = Nightmare({ show: true })
 const morgan = require('morgan')
 
 app.use(morgan(':method :url :status :res[content-length] - :response-time ms'))
@@ -118,8 +118,9 @@ async function marker(text, method){
 async function getYandexUrl(name){
     console.log(name)
     return new Promise(async (resolve, reject) => {
+        console.log(name,'2')
         nightmare
-            .goto('https://yandex.by/pogoda/minsk')
+            .goto('https://yandex.com/pogoda/minsk')
             .click('body > header > div > form > div > input')
             .type('body > header > div > form > div > input', name)
             .wait('li[class="mini-suggest__item mini-suggest__item_type_nav"]')
