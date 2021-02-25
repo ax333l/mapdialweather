@@ -136,6 +136,23 @@ async function getYandexUrl(name){
     })
 }
 
+async function TestNightmare(){
+    return new Promise(async (resolve, reject) => {
+        nightmare
+            .goto('https://yandex.com/pogoda/minsk')
+            .evaluate(() => document.querySelector('body').innerHTML)
+            .end()
+            .then(link => {
+                console.log(link)
+            })
+            .catch(error => {
+                console.error(error)
+            })
+        })
+}
+
+TestNightmare()
+
 function getLocationbyAdress(address, callback){
     request({url: 'https://geocode.search.hereapi.com/v1/geocode?q='+encodeURI(address)+'&apiKey='+apiKey}, function(err,res,html){
         if(err){
